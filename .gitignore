@@ -1,0 +1,25 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build output
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+
+# Generated reports / temporary files
+report_assets/
+report_render/
+report_render_word/
+*.pdf
+*.pdb
+
+# OS files
+Thumbs.db
+Desktop.ini
