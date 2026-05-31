@@ -1,0 +1,18 @@
+PANDUAN SINGKAT PROJECT SISTEM KASIR MINIMARKET
+
+1. Buka project melalui Minimarket.slnx atau Minimarket/Minimarket.csproj di Visual Studio.
+2. Pastikan SQL Server Express berjalan. Default connection string ada di Minimarket/App.config.
+3. Jalankan setup-sqlserver.sql di SSMS jika database belum terbentuk otomatis.
+4. Login aplikasi:
+   Username: admin
+   Password: admin123
+5. Fitur utama:
+   - CRUD produk dengan harga, diskon, dan stok.
+   - Live search produk berdasarkan kode/nama.
+   - Transaksi kasir dan histori transaksi.
+   - Crystal Report menu: Penjualan, Transaksi, User, Inventory.
+   - Export TXT data report.
+6. Catatan Crystal Report:
+   - Komputer perlu SAP Crystal Reports runtime/Visual Studio integration.
+   - Template .rpt diletakkan di Minimarket/Reports.
+   - Sumber data SQL view: dbo.vwCrystalSalesReport, dbo.vwCrystalTransactionReport, dbo.vwCrystalUserReport, dbo.vwCrystalInventoryReport.

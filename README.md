@@ -27,10 +27,16 @@ Aplikasi kasir minimarket berbasis C# Windows Forms dan Microsoft SQL Server.
 Default connection string ada di `Minimarket/App.config`:
 
 ```text
-Data Source=.\SQLEXPRESS;Initial Catalog=MinimarketDb;Integrated Security=True
+Data Source=.\SQLEXPRESS;Initial Catalog=MinimarketDb;Integrated Security=True;Encrypt=False;TrustServerCertificate=True;Connection Timeout=10
 ```
 
-Jika nama SQL Server berbeda, ubah bagian `Data Source`.
+Jika nama SQL Server berbeda, ubah bagian `Data Source` saja. Contoh:
+
+```text
+KANNEKY-MITSUKI\SQLEXPRESS
+localhost
+.\SQLEXPRESS
+```
 
 Database bisa dibuat otomatis saat aplikasi pertama dibuka, atau manual dengan menjalankan:
 
@@ -51,6 +57,15 @@ Password: admin123
 2. Pastikan SQL Server Express berjalan.
 3. Jalankan `setup-sqlserver.sql` jika database belum ada.
 4. Build dan run project.
+
+## Catatan Koneksi SQL Server
+
+Program ini memakai SQL Server Express dengan Windows Authentication. Kalau muncul error koneksi:
+
+1. Pastikan service `SQL Server (SQLEXPRESS)` sedang `Running`.
+2. Coba ubah `Data Source` di `App.config` menjadi `.\SQLEXPRESS`.
+3. Di SQL Server Configuration Manager, pastikan protokol `Shared Memory` aktif untuk koneksi lokal.
+4. Restart service `SQL Server (SQLEXPRESS)` setelah mengubah konfigurasi.
 
 ## Crystal Report
 

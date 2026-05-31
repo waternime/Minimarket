@@ -1,0 +1,15 @@
+CEK KELENGKAPAN FINAL EXAM - SISTEM KASIR MINIMARKET
+
+Status laporan utama:
+- Cover, judul, anggota: sudah ada. Catatan: lembar pengesahan masih typo "Sistem Informais", sebaiknya "Informatika".
+- Business process: sudah ada.
+- ERD dan struktur database: sudah ada.
+- Capture layout: perlu diperkuat menjadi 6 layout, tambahkan ProductEditorForm dan Laporan Crystal.
+- Coding explanation: sudah ada dasar, perlu tambah OOP inheritance, LINQ, CrystalReportService, dan file TXT.
+- CRUD SQL Server ADO.NET: sudah ada.
+- LINQ search/filter/sorting: perlu dijelaskan.
+- Crystal Report 4 menu: perlu dijelaskan, dan file .rpt perlu ditambahkan jika sudah dibuat di Crystal Designer.
+- File handling TXT: perlu dijelaskan lewat fitur Export TXT report.
+- Role anggota: belum ada, tambahkan tabel peran anggota.
+
+File tambahan yang dibuat: Lampiran_Tambahan_Final_Exam_Minimarket.docx

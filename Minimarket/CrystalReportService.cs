@@ -9,38 +9,22 @@ namespace Minimarket
 {
     internal static class CrystalReportService
     {
+        private static readonly CrystalReportDefinition[] Definitions =
+        {
+            new SalesCrystalReportDefinition(),
+            new TransactionCrystalReportDefinition(),
+            new UserCrystalReportDefinition(),
+            new InventoryCrystalReportDefinition()
+        };
+
         public static string GetReportTitle(ReportKind reportKind)
         {
-            switch (reportKind)
-            {
-                case ReportKind.Sales:
-                    return "Laporan Penjualan";
-                case ReportKind.Transaction:
-                    return "Laporan Transaksi";
-                case ReportKind.User:
-                    return "Laporan User";
-                case ReportKind.Inventory:
-                    return "Laporan Inventory";
-                default:
-                    throw new ArgumentOutOfRangeException("reportKind");
-            }
+            return GetDefinition(reportKind).Title;
         }
 
         public static string GetTemplateFileName(ReportKind reportKind)
         {
-            switch (reportKind)
-            {
-                case ReportKind.Sales:
-                    return "SalesReport.rpt";
-                case ReportKind.Transaction:
-                    return "TransactionReport.rpt";
-                case ReportKind.User:
-                    return "UserReport.rpt";
-                case ReportKind.Inventory:
-                    return "InventoryReport.rpt";
-                default:
-                    throw new ArgumentOutOfRangeException("reportKind");
-            }
+            return GetDefinition(reportKind).TemplateFileName;
         }
 
         public static string GetTemplatePath(ReportKind reportKind)
@@ -91,6 +75,52 @@ namespace Minimarket
                 "CrystalDecisions.Windows.Forms.CrystalReportViewer, CrystalDecisions.Windows.Forms",
                 throwOnError);
         }
+
+        private static CrystalReportDefinition GetDefinition(ReportKind reportKind)
+        {
+            CrystalReportDefinition definition = Definitions.FirstOrDefault(item => item.Kind == reportKind);
+            if (definition == null)
+            {
+                throw new ArgumentOutOfRangeException("reportKind");
+            }
+
+            return definition;
+        }
+    }
+
+    internal abstract class CrystalReportDefinition
+    {
+        public abstract ReportKind Kind { get; }
+        public abstract string Title { get; }
+        public abstract string TemplateFileName { get; }
+    }
+
+    internal sealed class SalesCrystalReportDefinition : CrystalReportDefinition
+    {
+        public override ReportKind Kind { get { return ReportKind.Sales; } }
+        public override string Title { get { return "Laporan Penjualan"; } }
+        public override string TemplateFileName { get { return "SalesReport.rpt"; } }
+    }
+
+    internal sealed class TransactionCrystalReportDefinition : CrystalReportDefinition
+    {
+        public override ReportKind Kind { get { return ReportKind.Transaction; } }
+        public override string Title { get { return "Laporan Transaksi"; } }
+        public override string TemplateFileName { get { return "TransactionReport.rpt"; } }
+    }
+
+    internal sealed class UserCrystalReportDefinition : CrystalReportDefinition
+    {
+        public override ReportKind Kind { get { return ReportKind.User; } }
+        public override string Title { get { return "Laporan User"; } }
+        public override string TemplateFileName { get { return "UserReport.rpt"; } }
+    }
+
+    internal sealed class InventoryCrystalReportDefinition : CrystalReportDefinition
+    {
+        public override ReportKind Kind { get { return ReportKind.Inventory; } }
+        public override string Title { get { return "Laporan Inventory"; } }
+        public override string TemplateFileName { get { return "InventoryReport.rpt"; } }
     }
 
     internal sealed class CrystalReportPreviewForm : Form

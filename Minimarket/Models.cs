@@ -2,9 +2,19 @@ using System;
 
 namespace Minimarket
 {
-    internal sealed class Product
+    internal abstract class EntityBase
     {
-        public int ProductId { get; set; }
+        public int Id { get; set; }
+    }
+
+    internal sealed class Product : EntityBase
+    {
+        public int ProductId
+        {
+            get { return Id; }
+            set { Id = value; }
+        }
+
         public string Code { get; set; }
         public string Name { get; set; }
         public decimal Price { get; set; }
@@ -28,9 +38,14 @@ namespace Minimarket
         }
     }
 
-    internal sealed class SalesTransaction
+    internal sealed class SalesTransaction : EntityBase
     {
-        public int TransactionId { get; set; }
+        public int TransactionId
+        {
+            get { return Id; }
+            set { Id = value; }
+        }
+
         public string InvoiceNo { get; set; }
         public DateTime TransactionDate { get; set; }
         public decimal TotalAmount { get; set; }
