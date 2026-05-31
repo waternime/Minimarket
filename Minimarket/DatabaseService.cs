@@ -414,6 +414,135 @@ ORDER BY TransactionItemId;", connection))
             return items;
         }
 
+        public DataTable GetReportData(ReportKind reportKind, DateTime? startDate, DateTime? endDate, string keyword)
+        {
+            switch (reportKind)
+            {
+                case ReportKind.Sales:
+                    return GetSalesReportData(startDate, endDate, keyword);
+                case ReportKind.Transaction:
+                    return GetTransactionReportData(startDate, endDate, keyword);
+                case ReportKind.User:
+                    return GetUserReportData(startDate, endDate, keyword);
+                case ReportKind.Inventory:
+                    return GetInventoryReportData(keyword);
+                default:
+                    throw new ArgumentOutOfRangeException("reportKind");
+            }
+        }
+
+        private DataTable GetSalesReportData(DateTime? startDate, DateTime? endDate, string keyword)
+        {
+            using (SqlConnection connection = OpenConnection())
+            using (SqlCommand command = new SqlCommand(@"
+SELECT
+    ti.ProductCode AS [Kode Produk],
+    ti.ProductName AS [Nama Produk],
+    SUM(ti.Qty) AS [Total Qty],
+    SUM(ti.OriginalPrice * ti.Qty) AS [Total Harga Asli],
+    SUM((ti.OriginalPrice - ti.FinalPrice) * ti.Qty) AS [Total Diskon],
+    SUM(ti.Subtotal) AS [Total Penjualan]
+FROM dbo.TransactionItems ti
+INNER JOIN dbo.Transactions t ON t.TransactionId = ti.TransactionId
+WHERE (@StartDate IS NULL OR t.TransactionDate >= @StartDate)
+  AND (@EndDate IS NULL OR t.TransactionDate < @EndDate)
+  AND (@Keyword = N'' OR ti.ProductCode LIKE @KeywordPattern OR ti.ProductName LIKE @KeywordPattern)
+GROUP BY ti.ProductCode, ti.ProductName
+ORDER BY SUM(ti.Subtotal) DESC, ti.ProductName;", connection))
+            {
+                AddReportParameters(command, startDate, endDate, keyword);
+                return FillReportTable(command, "SalesReport");
+            }
+        }
+
+        private DataTable GetTransactionReportData(DateTime? startDate, DateTime? endDate, string keyword)
+        {
+            using (SqlConnection connection = OpenConnection())
+            using (SqlCommand command = new SqlCommand(@"
+SELECT
+    InvoiceNo AS [ID Transaksi],
+    TransactionDate AS [Tanggal],
+    TotalAmount AS [Total],
+    PaidAmount AS [Uang Diterima],
+    ChangeAmount AS [Kembalian]
+FROM dbo.Transactions
+WHERE (@StartDate IS NULL OR TransactionDate >= @StartDate)
+  AND (@EndDate IS NULL OR TransactionDate < @EndDate)
+  AND (@Keyword = N'' OR InvoiceNo LIKE @KeywordPattern)
+ORDER BY TransactionDate DESC;", connection))
+            {
+                AddReportParameters(command, startDate, endDate, keyword);
+                return FillReportTable(command, "TransactionReport");
+            }
+        }
+
+        private DataTable GetUserReportData(DateTime? startDate, DateTime? endDate, string keyword)
+        {
+            using (SqlConnection connection = OpenConnection())
+            using (SqlCommand command = new SqlCommand(@"
+SELECT
+    UserId AS [ID User],
+    Username AS [Username],
+    CreatedAt AS [Dibuat],
+    UpdatedAt AS [Diubah]
+FROM dbo.Users
+WHERE (@StartDate IS NULL OR CreatedAt >= @StartDate)
+  AND (@EndDate IS NULL OR CreatedAt < @EndDate)
+  AND (@Keyword = N'' OR Username LIKE @KeywordPattern)
+ORDER BY Username;", connection))
+            {
+                AddReportParameters(command, startDate, endDate, keyword);
+                return FillReportTable(command, "UserReport");
+            }
+        }
+
+        private DataTable GetInventoryReportData(string keyword)
+        {
+            using (SqlConnection connection = OpenConnection())
+            using (SqlCommand command = new SqlCommand(@"
+SELECT
+    Code AS [Kode Produk],
+    Name AS [Nama Produk],
+    Stock AS [Stok],
+    Price AS [Harga Asli],
+    DiscountPercent AS [Diskon Persen],
+    CAST(ROUND(Price - (Price * DiscountPercent / 100), 0) AS DECIMAL(18,2)) AS [Harga Diskon],
+    CreatedAt AS [Dibuat],
+    UpdatedAt AS [Diubah]
+FROM dbo.Products
+WHERE (@Keyword = N'' OR Code LIKE @KeywordPattern OR Name LIKE @KeywordPattern)
+ORDER BY Name;", connection))
+            {
+                AddKeywordParameters(command, keyword);
+                return FillReportTable(command, "InventoryReport");
+            }
+        }
+
+        private static void AddReportParameters(SqlCommand command, DateTime? startDate, DateTime? endDate, string keyword)
+        {
+            command.Parameters.Add("@StartDate", SqlDbType.DateTime2).Value = startDate.HasValue ? (object)startDate.Value.Date : DBNull.Value;
+            command.Parameters.Add("@EndDate", SqlDbType.DateTime2).Value = endDate.HasValue ? (object)endDate.Value.Date.AddDays(1) : DBNull.Value;
+            AddKeywordParameters(command, keyword);
+        }
+
+        private static void AddKeywordParameters(SqlCommand command, string keyword)
+        {
+            string normalizedKeyword = (keyword ?? string.Empty).Trim();
+            command.Parameters.Add("@Keyword", SqlDbType.NVarChar, 120).Value = normalizedKeyword;
+            command.Parameters.Add("@KeywordPattern", SqlDbType.NVarChar, 140).Value = "%" + normalizedKeyword + "%";
+        }
+
+        private static DataTable FillReportTable(SqlCommand command, string tableName)
+        {
+            DataTable table = new DataTable(tableName);
+            using (SqlDataAdapter adapter = new SqlDataAdapter(command))
+            {
+                adapter.Fill(table);
+            }
+
+            return table;
+        }
+
         public void DeleteHistory()
         {
             using (SqlConnection connection = OpenConnection())

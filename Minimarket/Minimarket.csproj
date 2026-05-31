@@ -53,6 +53,7 @@
     <Compile Include="MainForm.Designer.cs">
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="CrystalReportService.cs" />
     <Compile Include="DatabaseService.cs" />
     <Compile Include="Models.cs" />
     <Compile Include="ProductEditorForm.cs">
@@ -82,6 +83,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="Reports\README_CRYSTAL.md" />
+    <Content Include="Reports\*.rpt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

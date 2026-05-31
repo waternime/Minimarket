@@ -50,6 +50,14 @@ namespace Minimarket
         public decimal Subtotal { get; set; }
     }
 
+    internal enum ReportKind
+    {
+        Sales,
+        Transaction,
+        User,
+        Inventory
+    }
+
     internal static class Money
     {
         public static decimal Round(decimal value)

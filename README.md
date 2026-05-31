@@ -11,6 +11,8 @@ Aplikasi kasir minimarket berbasis C# Windows Forms dan Microsoft SQL Server.
 - Histori transaksi dengan filter bulan/tahun.
 - Cetak struk dan export struk transaksi ke PDF.
 - Hapus transaksi histori yang dipilih.
+- Tab Laporan Crystal dengan 4 menu report: penjualan, transaksi, user, dan inventory.
+- Export data report ke file TXT.
 
 ## Teknologi
 
@@ -18,6 +20,7 @@ Aplikasi kasir minimarket berbasis C# Windows Forms dan Microsoft SQL Server.
 - .NET Framework 4.7.2
 - Microsoft SQL Server Express
 - ADO.NET / System.Data.SqlClient
+- SAP Crystal Reports for Visual Studio
 
 ## Database
 
@@ -48,3 +51,16 @@ Password: admin123
 2. Pastikan SQL Server Express berjalan.
 3. Jalankan `setup-sqlserver.sql` jika database belum ada.
 4. Build dan run project.
+
+## Crystal Report
+
+Aplikasi sudah menyiapkan menu dan kode preview untuk Crystal Report. Agar tombol `Preview Crystal` berjalan di komputer lain, install SAP Crystal Reports for Visual Studio lalu buat/simpan template berikut di folder `Minimarket/Reports`:
+
+```text
+SalesReport.rpt
+TransactionReport.rpt
+UserReport.rpt
+InventoryReport.rpt
+```
+
+Jika Crystal runtime atau file `.rpt` belum ada, aplikasi tetap bisa menampilkan preview data report di grid dan akan memberi pesan bagian mana yang belum tersedia.

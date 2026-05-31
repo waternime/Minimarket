@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 using System.Drawing;
 using System.Drawing.Printing;
@@ -44,6 +45,14 @@ namespace Minimarket
         private DataGridView historyItemsGrid;
         private Label historyTotalLabel;
         private List<SalesTransaction> historyTransactions = new List<SalesTransaction>();
+
+        private DateTimePicker reportStartDatePicker;
+        private DateTimePicker reportEndDatePicker;
+        private TextBox reportKeywordTextBox;
+        private DataGridView reportGrid;
+        private Label reportInfoLabel;
+        private ReportKind currentReportKind = ReportKind.Sales;
+        private DataTable currentReportData;
 
         private TextBox accountUsernameTextBox;
         private TextBox accountPasswordTextBox;
@@ -221,8 +230,13 @@ namespace Minimarket
             historyButton.Click += delegate { ShowMainTab(MainTab.History); };
             header.Controls.Add(historyButton);
 
+            Button reportButton = CreateNavButton("Laporan Crystal", MainTab.Reports, tab == MainTab.Reports);
+            reportButton.Left = historyButton.Right;
+            reportButton.Click += delegate { ShowMainTab(MainTab.Reports); };
+            header.Controls.Add(reportButton);
+
             Button settingsButton = CreateNavButton("Pengaturan", MainTab.Settings, tab == MainTab.Settings);
-            settingsButton.Left = historyButton.Right;
+            settingsButton.Left = reportButton.Right;
             settingsButton.Click += delegate { ShowMainTab(MainTab.Settings); };
             header.Controls.Add(settingsButton);
 
@@ -249,6 +263,10 @@ namespace Minimarket
             else if (tab == MainTab.History)
             {
                 BuildHistoryView();
+            }
+            else if (tab == MainTab.Reports)
+            {
+                BuildReportsView();
             }
             else
             {
@@ -589,6 +607,129 @@ namespace Minimarket
             historyActionPanel.Controls.Add(printHistoryButton);
 
             RefreshHistoryList();
+        }
+
+        private void BuildReportsView()
+        {
+            contentPanel.Controls.Clear();
+
+            SplitContainer split = CreateResponsiveSplit(360);
+            contentPanel.Controls.Add(split);
+
+            GroupBox filterBox = new GroupBox();
+            filterBox.Text = "Filter & Menu Report";
+            filterBox.Dock = DockStyle.Fill;
+            split.Panel1.Controls.Add(filterBox);
+
+            TableLayoutPanel filterLayout = new TableLayoutPanel();
+            filterLayout.Dock = DockStyle.Fill;
+            filterLayout.Padding = new Padding(10);
+            filterLayout.ColumnCount = 1;
+            filterLayout.RowCount = 8;
+            filterLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
+            filterLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
+            filterLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
+            filterLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
+            filterLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
+            filterLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
+            filterLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 26));
+            filterLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            filterBox.Controls.Add(filterLayout);
+
+            filterLayout.Controls.Add(CreateLabel("Dari Tanggal"), 0, 0);
+            reportStartDatePicker = new DateTimePicker();
+            reportStartDatePicker.Dock = DockStyle.Fill;
+            reportStartDatePicker.Format = DateTimePickerFormat.Short;
+            reportStartDatePicker.ShowCheckBox = true;
+            reportStartDatePicker.Checked = true;
+            reportStartDatePicker.Value = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+            filterLayout.Controls.Add(reportStartDatePicker, 0, 1);
+
+            filterLayout.Controls.Add(CreateLabel("Sampai Tanggal"), 0, 2);
+            reportEndDatePicker = new DateTimePicker();
+            reportEndDatePicker.Dock = DockStyle.Fill;
+            reportEndDatePicker.Format = DateTimePickerFormat.Short;
+            reportEndDatePicker.ShowCheckBox = true;
+            reportEndDatePicker.Checked = true;
+            reportEndDatePicker.Value = DateTime.Today;
+            filterLayout.Controls.Add(reportEndDatePicker, 0, 3);
+
+            filterLayout.Controls.Add(CreateLabel("Keyword Produk/User/ID"), 0, 4);
+            reportKeywordTextBox = new TextBox();
+            reportKeywordTextBox.Dock = DockStyle.Fill;
+            filterLayout.Controls.Add(reportKeywordTextBox, 0, 5);
+
+            Label menuLabel = CreateLabel("4 Menu Generate Report");
+            menuLabel.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            filterLayout.Controls.Add(menuLabel, 0, 6);
+
+            FlowLayoutPanel reportButtons = new FlowLayoutPanel();
+            reportButtons.Dock = DockStyle.Fill;
+            reportButtons.FlowDirection = FlowDirection.TopDown;
+            reportButtons.WrapContents = false;
+            reportButtons.AutoScroll = true;
+            filterLayout.Controls.Add(reportButtons, 0, 7);
+
+            AddReportMenuButton(reportButtons, "1. Laporan Penjualan", ReportKind.Sales);
+            AddReportMenuButton(reportButtons, "2. Laporan Transaksi", ReportKind.Transaction);
+            AddReportMenuButton(reportButtons, "3. Laporan User", ReportKind.User);
+            AddReportMenuButton(reportButtons, "4. Laporan Inventory", ReportKind.Inventory);
+
+            GroupBox previewBox = new GroupBox();
+            previewBox.Text = "Preview Data Report";
+            previewBox.Dock = DockStyle.Fill;
+            split.Panel2.Controls.Add(previewBox);
+
+            TableLayoutPanel previewLayout = new TableLayoutPanel();
+            previewLayout.Dock = DockStyle.Fill;
+            previewLayout.Padding = new Padding(10);
+            previewLayout.ColumnCount = 1;
+            previewLayout.RowCount = 3;
+            previewLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 58));
+            previewLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            previewLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 50));
+            previewBox.Controls.Add(previewLayout);
+
+            reportInfoLabel = new Label();
+            reportInfoLabel.Dock = DockStyle.Fill;
+            reportInfoLabel.TextAlign = ContentAlignment.MiddleLeft;
+            reportInfoLabel.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            reportInfoLabel.Text = "Pilih salah satu menu report di kiri.";
+            previewLayout.Controls.Add(reportInfoLabel, 0, 0);
+
+            reportGrid = CreateGrid();
+            reportGrid.AutoGenerateColumns = true;
+            previewLayout.Controls.Add(reportGrid, 0, 1);
+
+            FlowLayoutPanel actionPanel = new FlowLayoutPanel();
+            actionPanel.Dock = DockStyle.Fill;
+            actionPanel.FlowDirection = FlowDirection.RightToLeft;
+            actionPanel.Padding = new Padding(0, 8, 0, 0);
+            previewLayout.Controls.Add(actionPanel, 0, 2);
+
+            Button crystalPreviewButton = CreateButton("Preview Crystal", Color.FromArgb(52, 145, 71), Color.White);
+            crystalPreviewButton.Width = 140;
+            crystalPreviewButton.Height = 34;
+            crystalPreviewButton.Click += PreviewCurrentCrystalButton_Click;
+            actionPanel.Controls.Add(crystalPreviewButton);
+
+            Button exportTxtButton = CreateButton("Export TXT", Color.FromArgb(86, 96, 109), Color.White);
+            exportTxtButton.Width = 120;
+            exportTxtButton.Height = 34;
+            exportTxtButton.Click += ExportReportTxtButton_Click;
+            actionPanel.Controls.Add(exportTxtButton);
+
+            GenerateReport(ReportKind.Sales);
+        }
+
+        private void AddReportMenuButton(FlowLayoutPanel parent, string text, ReportKind reportKind)
+        {
+            Button button = CreateButton(text, Color.FromArgb(30, 112, 184), Color.White);
+            button.Width = 300;
+            button.Height = 38;
+            button.Margin = new Padding(0, 4, 0, 4);
+            button.Click += delegate { GenerateReport(reportKind); };
+            parent.Controls.Add(button);
         }
 
         private void BuildSettingsView()
@@ -1338,6 +1479,174 @@ namespace Minimarket
             }
         }
 
+        private void GenerateReport(ReportKind reportKind)
+        {
+            if (reportStartDatePicker != null && reportEndDatePicker != null &&
+                reportStartDatePicker.Checked && reportEndDatePicker.Checked &&
+                reportEndDatePicker.Value.Date < reportStartDatePicker.Value.Date)
+            {
+                MessageBox.Show("Tanggal akhir tidak boleh lebih kecil dari tanggal awal.", "Report", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            DateTime? startDate = reportStartDatePicker != null && reportStartDatePicker.Checked
+                ? (DateTime?)reportStartDatePicker.Value.Date
+                : null;
+            DateTime? endDate = reportEndDatePicker != null && reportEndDatePicker.Checked
+                ? (DateTime?)reportEndDatePicker.Value.Date
+                : null;
+            string keyword = reportKeywordTextBox == null ? string.Empty : reportKeywordTextBox.Text.Trim();
+
+            try
+            {
+                currentReportKind = reportKind;
+                currentReportData = database.GetReportData(reportKind, startDate, endDate, keyword);
+
+                reportGrid.DataSource = null;
+                reportGrid.DataSource = currentReportData;
+
+                string crystalStatus = CrystalReportService.IsCrystalRuntimeAvailable()
+                    ? "Crystal runtime siap"
+                    : "Crystal runtime belum terpasang";
+                reportInfoLabel.Text =
+                    CrystalReportService.GetReportTitle(reportKind) + "\r\n" +
+                    currentReportData.Rows.Count.ToString(culture) + " baris data | " +
+                    GetReportFilterText(startDate, endDate, keyword) + " | " +
+                    crystalStatus;
+            }
+            catch (Exception ex)
+            {
+                ShowError("membuat report", ex);
+            }
+        }
+
+        private void PreviewCurrentCrystalButton_Click(object sender, EventArgs e)
+        {
+            if (currentReportData == null)
+            {
+                GenerateReport(currentReportKind);
+            }
+
+            if (currentReportData == null)
+            {
+                return;
+            }
+
+            try
+            {
+                CrystalReportService.ShowReport(this, currentReportKind, currentReportData);
+            }
+            catch (Exception ex)
+            {
+                ShowError("membuka Crystal Report", ex);
+            }
+        }
+
+        private void ExportReportTxtButton_Click(object sender, EventArgs e)
+        {
+            if (currentReportData == null)
+            {
+                GenerateReport(currentReportKind);
+            }
+
+            if (currentReportData == null)
+            {
+                return;
+            }
+
+            using (SaveFileDialog dialog = new SaveFileDialog())
+            {
+                dialog.Title = "Export Report ke TXT";
+                dialog.Filter = "Text File (*.txt)|*.txt";
+                dialog.FileName = CrystalReportService.GetTemplateFileName(currentReportKind).Replace(".rpt", ".txt");
+
+                if (dialog.ShowDialog(this) != DialogResult.OK)
+                {
+                    return;
+                }
+
+                try
+                {
+                    WriteReportTextFile(dialog.FileName, CrystalReportService.GetReportTitle(currentReportKind), currentReportData);
+                    MessageBox.Show("TXT berhasil dibuat:\r\n" + dialog.FileName, "Export TXT", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    ShowError("export TXT", ex);
+                }
+            }
+        }
+
+        private void WriteReportTextFile(string path, string title, DataTable table)
+        {
+            using (StreamWriter writer = new StreamWriter(path, false, Encoding.UTF8))
+            {
+                writer.WriteLine(title);
+                writer.WriteLine("Dibuat: " + DateTime.Now.ToString("dd MMMM yyyy HH:mm", culture));
+                writer.WriteLine("Jumlah Data: " + table.Rows.Count.ToString(culture));
+                writer.WriteLine();
+
+                List<string> headers = new List<string>();
+                foreach (DataColumn column in table.Columns)
+                {
+                    headers.Add(column.ColumnName);
+                }
+
+                writer.WriteLine(string.Join("\t", headers));
+
+                foreach (DataRow row in table.Rows)
+                {
+                    List<string> values = new List<string>();
+                    foreach (DataColumn column in table.Columns)
+                    {
+                        values.Add(EscapeTextFileValue(row[column]));
+                    }
+
+                    writer.WriteLine(string.Join("\t", values));
+                }
+            }
+        }
+
+        private string EscapeTextFileValue(object value)
+        {
+            if (value == null || value == DBNull.Value)
+            {
+                return string.Empty;
+            }
+
+            DateTime dateTime;
+            if (DateTime.TryParse(Convert.ToString(value, culture), out dateTime) && value is DateTime)
+            {
+                return dateTime.ToString("dd MMM yyyy HH:mm", culture);
+            }
+
+            return Convert.ToString(value, culture)
+                .Replace("\r", " ")
+                .Replace("\n", " ")
+                .Replace("\t", " ");
+        }
+
+        private string GetReportFilterText(DateTime? startDate, DateTime? endDate, string keyword)
+        {
+            List<string> filters = new List<string>();
+            if (startDate.HasValue)
+            {
+                filters.Add("dari " + startDate.Value.ToString("dd MMM yyyy", culture));
+            }
+
+            if (endDate.HasValue)
+            {
+                filters.Add("sampai " + endDate.Value.ToString("dd MMM yyyy", culture));
+            }
+
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                filters.Add("keyword " + keyword);
+            }
+
+            return filters.Count == 0 ? "tanpa filter" : string.Join(", ", filters);
+        }
+
         private void UpdateAccountButton_Click(object sender, EventArgs e)
         {
             string username = accountUsernameTextBox.Text.Trim();
@@ -1650,6 +1959,14 @@ namespace Minimarket
                     graphics.DrawLine(pen, 11, 11, 15, 13);
                     graphics.DrawArc(pen, 3, 3, 16, 16, 205, 70);
                 }
+                else if (tab == MainTab.Reports)
+                {
+                    graphics.DrawRectangle(pen, 5, 4, 12, 15);
+                    graphics.DrawLine(pen, 8, 15, 8, 11);
+                    graphics.DrawLine(pen, 11, 15, 11, 8);
+                    graphics.DrawLine(pen, 14, 15, 14, 10);
+                    graphics.DrawLine(pen, 7, 7, 15, 7);
+                }
                 else
                 {
                     graphics.DrawEllipse(pen, 7, 7, 8, 8);
@@ -1749,6 +2066,7 @@ namespace Minimarket
         {
             Cashier,
             History,
+            Reports,
             Settings
         }
 
