@@ -14,6 +14,7 @@ x64/
 x86/
 
 # Generated reports / temporary files
+dokumen/
 report_assets/
 report_render/
 report_render_word/
