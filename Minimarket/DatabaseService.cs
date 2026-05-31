@@ -96,6 +96,8 @@ BEGIN
 END;
 ");
 
+                EnsureReportViews(connection);
+
                 using (SqlCommand command = new SqlCommand("IF NOT EXISTS (SELECT 1 FROM dbo.Users) INSERT INTO dbo.Users (Username, PasswordHash) VALUES (@Username, @PasswordHash);", connection))
                 {
                     command.Parameters.AddWithValue("@Username", "admin");
@@ -103,6 +105,77 @@ END;
                     command.ExecuteNonQuery();
                 }
             }
+        }
+
+        private static void EnsureReportViews(SqlConnection connection)
+        {
+            ExecuteNonQuery(connection, @"
+CREATE OR ALTER VIEW dbo.vwCrystalSalesReport
+AS
+SELECT
+    t.TransactionDate,
+    t.InvoiceNo,
+    ti.ProductCode,
+    ti.ProductName,
+    ti.Qty,
+    ti.OriginalPrice,
+    ti.DiscountPercent,
+    ti.FinalPrice,
+    (ti.OriginalPrice - ti.FinalPrice) * ti.Qty AS DiscountAmount,
+    ti.Subtotal
+FROM dbo.TransactionItems ti
+INNER JOIN dbo.Transactions t ON t.TransactionId = ti.TransactionId;
+");
+
+            ExecuteNonQuery(connection, @"
+CREATE OR ALTER VIEW dbo.vwCrystalTransactionReport
+AS
+SELECT
+    t.TransactionId,
+    t.InvoiceNo,
+    t.TransactionDate,
+    COUNT(ti.TransactionItemId) AS ItemCount,
+    SUM(ti.Qty) AS TotalQty,
+    t.TotalAmount,
+    t.PaidAmount,
+    t.ChangeAmount
+FROM dbo.Transactions t
+LEFT JOIN dbo.TransactionItems ti ON ti.TransactionId = t.TransactionId
+GROUP BY
+    t.TransactionId,
+    t.InvoiceNo,
+    t.TransactionDate,
+    t.TotalAmount,
+    t.PaidAmount,
+    t.ChangeAmount;
+");
+
+            ExecuteNonQuery(connection, @"
+CREATE OR ALTER VIEW dbo.vwCrystalUserReport
+AS
+SELECT
+    UserId,
+    Username,
+    CreatedAt,
+    UpdatedAt
+FROM dbo.Users;
+");
+
+            ExecuteNonQuery(connection, @"
+CREATE OR ALTER VIEW dbo.vwCrystalInventoryReport
+AS
+SELECT
+    ProductId,
+    Code,
+    Name,
+    Stock,
+    Price,
+    DiscountPercent,
+    CAST(ROUND(Price - (Price * DiscountPercent / 100), 0) AS DECIMAL(18,2)) AS FinalPrice,
+    CreatedAt,
+    UpdatedAt
+FROM dbo.Products;
+");
         }
 
         public bool ValidateLogin(string username, string password)

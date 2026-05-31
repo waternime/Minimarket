@@ -22,4 +22,11 @@ Nama DataTable dari aplikasi:
 - `UserReport`
 - `InventoryReport`
 
+Kalau membuat `.rpt` langsung dari SQL Server, gunakan view berikut sebagai sumber data:
+
+- `dbo.vwCrystalSalesReport`
+- `dbo.vwCrystalTransactionReport`
+- `dbo.vwCrystalUserReport`
+- `dbo.vwCrystalInventoryReport`
+
 Setelah file `.rpt` dibuat dan disimpan di folder ini, Visual Studio akan menyalinnya ke folder output aplikasi saat build.

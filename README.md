@@ -64,3 +64,12 @@ InventoryReport.rpt
 ```
 
 Jika Crystal runtime atau file `.rpt` belum ada, aplikasi tetap bisa menampilkan preview data report di grid dan akan memberi pesan bagian mana yang belum tersedia.
+
+Sumber data SQL untuk Crystal Report sudah disiapkan sebagai view:
+
+```text
+dbo.vwCrystalSalesReport
+dbo.vwCrystalTransactionReport
+dbo.vwCrystalUserReport
+dbo.vwCrystalInventoryReport
+```
